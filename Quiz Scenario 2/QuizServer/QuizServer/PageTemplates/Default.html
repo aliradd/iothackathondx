@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Welcome to the Quiz game</title>
+</head>
+<body>
+    <h1>Start new quiz game</h1>
+    <form method="post" action="/">
+        <table>
+            <tr>
+                <td>Player Name:</td>
+                <td><input type="text" id="playername" name="playername" /></td>
+            </tr>
+            <tr>
+                <td>Location:</td>
+                <td><input type="text" id="location" name="location" /></td>
+            </tr>
+            <tr>
+                <td>Age:</td>
+                <td><input type="text" id="playerage" name="playerage" /></td>
+            </tr>
+            <tr>
+                <td>Gender:</td>
+                <td>
+                    <input type="radio" name="gender" value="male"> Male<br>
+                    <input type="radio" name="gender" value="female"> Female<br>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td align="right">
+                    <button type="submit" id="submit" value="Submit">Start Quiz</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+</body>
+</html>

@@ -1,0 +1,2 @@
+MainPackage=F:\Work\Programming\Elastacloud\IoT Hackathon DX Global\Industrial Scenario 3\SensorApp\SensorApp\bin\ARM\Release\SensorApp_1.0.1.0_ARM.appx
+SymbolPackage=F:\Work\Programming\Elastacloud\IoT Hackathon DX Global\Industrial Scenario 3\SensorApp\SensorApp\AppPackages\SensorApp_1.0.1.0_Test\SensorApp_1.0.1.0_ARM.appxsym

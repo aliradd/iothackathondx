@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Question {QUESTIONNUMBER}</title>
+</head>
+<body>
+    <p>{PREVIOUSANSWER}</p>
+    <h1>Question {QUESTIONNUMBER}</h1>
+    <form method="post" action="/">
+        <table>
+            <tr>
+                <td>
+                    {CATEGORY} - {QUESTION}<input type="hidden" value="{PLAYERID}" name="playerid" />
+                    <input type="hidden" value="{CATEGORYID}" name="categoryid" />
+                    <input type="hidden" value="{QUESTIONID}" name="questionid" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="answer" value="{ANSWER1ID}"> {ANSWER1}<br>
+                    <input type="radio" name="answer" value="{ANSWER2ID}"> {ANSWER2}<br>
+                    <input type="radio" name="answer" value="{ANSWER3ID}"> {ANSWER3}<br>
+                    <input type="radio" name="answer" value="{ANSWER4ID}"> {ANSWER4}<br>
+                </td>
+            </tr>
+            <tr>
+                <td><button type="submit" id="submit" value="Submit">{SUBMITNAME}</button></td>
+            </tr>
+        </table>
+    </form>
+</body>
+</html>
