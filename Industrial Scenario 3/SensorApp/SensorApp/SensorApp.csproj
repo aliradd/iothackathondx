@@ -138,12 +138,6 @@
       <Name>Windows IoT Extensions for the UWP</Name>
     </SDKReference>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Sensors.Dht\Sensors.Dht.vcxproj">
-      <Project>{2cd70a4f-9eed-4cda-9e07-1a2bd33b4976}</Project>
-      <Name>Sensors.Dht</Name>
-    </ProjectReference>
-  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

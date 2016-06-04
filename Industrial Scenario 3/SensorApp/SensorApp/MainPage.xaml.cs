@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Devices.Client;
-using Sensors.Dht;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +7,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using SensorApp.Common;
+using GIS = GHIElectronics.UWP.Shields;
 
 namespace SensorApp
 {
@@ -19,7 +19,6 @@ namespace SensorApp
         private const int DHTPIN = 4;
 
         // GPIO 
-        private IDht dht = null;
         private GpioPin dhtPin = null;
         private GpioPin ledPin = null;
         private GpioPinValue ledPinValue = GpioPinValue.High;
@@ -29,11 +28,11 @@ namespace SensorApp
 
         // Sensor readings offsets and poll interval
         private int temperatureOffset = 1;
-        private int humidityOffset = 1;
+        private int lightLevelOffset = 1;
         private int sensorInterval = 2;
         private DispatcherTimer sensorTimer = new DispatcherTimer();
         private bool temperatureOffsetEnabled = true;
-        private bool humidityOffsetEnabled = true;
+        private bool lightLevelOffsetEnabled = true;
         private DateTimeOffset readingsStartedAt = DateTime.MinValue;
 
         // Flash
@@ -41,6 +40,8 @@ namespace SensorApp
         private int flashInterval = 1;
         private int flashDuration = 10;
         private DateTimeOffset flashStartedAt = DateTime.MinValue;
+
+        private GIS.FEZHAT hat;
 
         // Properties
         private float _humidity = 0f;
@@ -116,28 +117,33 @@ namespace SensorApp
 
             try
             {
-                InitialiseGPIO();
-
-                sensorTimer.Interval = TimeSpan.FromSeconds(sensorInterval);
-                sensorTimer.Tick += sensorTimer_Tick;
-                flashTimer.Interval = TimeSpan.FromSeconds(flashInterval);
-                flashTimer.Tick += flashTimer_Tick;
-
-                dhtPin = GpioController.GetDefault().OpenPin(DHTPIN, GpioSharingMode.Exclusive);
-                dht = new Dht11(dhtPin, GpioPinDriveMode.Input);
-
-                deviceClient = DeviceClient.CreateFromConnectionString(IOTHUBCONNECTIONSTRING);
-                ReceiveCommands();
-
-                sensorTimer.Start();
-
-                readingsStartedAt = DateTimeOffset.Now;
+                // InitialiseGPIO();
+                Setup();
+           
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.Message);
             }
         }
+
+        private async void Setup()
+        {
+            sensorTimer.Interval = TimeSpan.FromSeconds(sensorInterval);
+            sensorTimer.Tick += sensorTimer_Tick;
+            flashTimer.Interval = TimeSpan.FromSeconds(flashInterval);
+            flashTimer.Tick += flashTimer_Tick;
+
+            this.hat = await GIS.FEZHAT.CreateAsync();
+
+            //deviceClient = DeviceClient.CreateFromConnectionString(IOTHUBCONNECTIONSTRING);
+            //ReceiveCommands();
+
+            sensorTimer.Start();
+
+            readingsStartedAt = DateTimeOffset.Now;
+        }
+
 
         private void InitialiseGPIO()
         {
@@ -160,39 +166,36 @@ namespace SensorApp
 
         private async void readSensors()
         {
-            DhtReading reading = await dht.GetReadingAsync().AsTask();
+            double temperature = this.hat.GetTemperature();
+            double lightLevel = this.hat.GetLightLevel();
 
-            //DhtReading reading = new DhtReading() { Temperature = 21, Humidity = 21, IsValid = true };
-            if (reading.IsValid)
+            TimeSpan elapsed = DateTimeOffset.Now.Subtract(readingsStartedAt);
+
+            // Check initial reading period has elapsed
+            if (elapsed.Seconds > INITIALREADINGPERIOD)
             {
-                TimeSpan elapsed = DateTimeOffset.Now.Subtract(readingsStartedAt);
-
-                // Check initial reading period has elapsed
-                if (elapsed.Seconds > INITIALREADINGPERIOD)
+                if (temperatureOffsetEnabled == true)
                 {
-                    if (temperatureOffsetEnabled == true)
+                    temperature += temperatureOffset;
+                    temperatureOffset += 1;
+                }
+                if (lightLevelOffsetEnabled == true)
+                {
+                    lightLevel += lightLevelOffset;
+                    // Only increment humidity to 100 as it's a percentage
+                    if (lightLevel < 100)
                     {
-                        reading.Temperature += temperatureOffset;
-                        temperatureOffset += 1;
+                        lightLevelOffset += 1;
                     }
-                    if (humidityOffsetEnabled == true)
-                    {
-                        reading.Humidity += humidityOffset;
-                        // Only increment humidity to 100 as it's a percentage
-                        if (reading.Humidity < 100)
-                        {
-                            humidityOffset += 1;
-                        }
 
-                    }
                 }
 
                 // Display data and send to IoT Hub
-                await SendDeviceToCloudMessage(reading.Temperature, reading.Humidity);
+                await SendDeviceToCloudMessage(temperature, lightLevel);
 
-                this.Temperature = Convert.ToSingle(reading.Temperature);
-                this.Humidity = Convert.ToSingle(reading.Humidity);
-                this.Log = string.Format("Read temperature: {0}, humidity: {1}", reading.Temperature, reading.Humidity);
+                this.Temperature = Convert.ToSingle(temperature);
+                this.Humidity = Convert.ToSingle(lightLevel);
+                this.Log = string.Format("Read temperature: {0}, light level: {1}", temperature, lightLevel);
                 this.OnPropertyChanged(nameof(TemperatureDisplay));
                 this.OnPropertyChanged(nameof(HumidityDisplay));
                 this.OnPropertyChanged(nameof(LogDisplay));
@@ -252,11 +255,11 @@ namespace SensorApp
                             temperatureOffset = 0;
                             break;
                         case "resethumidity":
-                            humidityOffset = 0;
+                            lightLevelOffset = 0;
                             break;
                         case "resetall":
                             temperatureOffset = 0;
-                            humidityOffset = 0;
+                            lightLevelOffset = 0;
                             break;
                         case "changepoll":
                             sensorInterval = Convert.ToInt32(messageData.Substring(messageData.IndexOf(":") +1, messageData.Length - (messageData.IndexOf(":") + 1)));
@@ -266,7 +269,7 @@ namespace SensorApp
                             temperatureOffsetEnabled = !temperatureOffsetEnabled;
                             break;
                         case "togglehumidityoffsetenabled":
-                            humidityOffsetEnabled = !humidityOffsetEnabled;
+                            lightLevelOffsetEnabled = !lightLevelOffsetEnabled;
                             break;
                         case "flash":
                             if (flashTimer.IsEnabled == false)
